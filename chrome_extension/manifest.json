@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Web Scraping Agent",
+  "version": "1.0.0",
+  "description": "Send the current page to the AI scraping agent to extract speakers, schedules, and structured content.",
+  "permissions": ["activeTab"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Scrape this page"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
