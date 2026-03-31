@@ -99,6 +99,26 @@ class GroceryOptimizerResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# package_tracker  (LLM used only for unstructured carrier status text)
+# ---------------------------------------------------------------------------
+
+class PackageStatusResponse(BaseModel):
+    status: str = Field(description="Normalized status (e.g. 'In Transit', 'Out for Delivery', 'Delivered')")
+    location: str | None = Field(
+        default=None,
+        description="Current location of the package, or null if unknown",
+    )
+    estimated_delivery: str | None = Field(
+        default=None,
+        description="Estimated delivery date as a string, or null if unknown",
+    )
+    delivered: bool = Field(
+        default=False,
+        description="True if the package has been delivered",
+    )
+
+
+# ---------------------------------------------------------------------------
 # finance_digest  (future)
 # ---------------------------------------------------------------------------
 

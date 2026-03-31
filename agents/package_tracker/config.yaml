@@ -1,0 +1,25 @@
+schedule:
+  interval_hours: 2              # Poll every 2 hours via systemd timer
+
+database:
+  path: "~/.config/allyx/package_tracker.db"
+
+carriers:
+  ups:
+    # UPS OAuth2 — https://developer.ups.com/
+    base_url: "https://onlinetools.ups.com/api/track/v1"
+  fedex:
+    # FedEx Track API — https://developer.fedex.com/
+    base_url: "https://apis.fedex.com/track/v1"
+  usps:
+    # USPS Web Tools — https://developer.usps.com/
+    base_url: "https://secure.shippingapis.com/ShippingAPI.dll"
+
+llm:
+  # Only used when carrier returns unstructured status text
+  enabled: true
+  timeout_seconds: 20
+
+discord:
+  channel: "packages"
+  status_channel: "agent-status"

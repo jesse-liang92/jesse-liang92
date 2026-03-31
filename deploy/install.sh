@@ -53,6 +53,7 @@ TIMER_AGENTS=(
     "morning_digest"
     "commute_ping"
     "grocery_optimizer"
+    "package_tracker"
 )
 
 # ---------------------------------------------------------------------------
