@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Scraping Agent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      width: 360px;
+      background: #0f1117;
+      color: #e4e6ea;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .url-box {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #9ca3af;
+      word-break: break-all;
+      margin-bottom: 12px;
+      min-height: 36px;
+    }
+
+    .focus-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .focus-row label {
+      font-size: 12px;
+      color: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    select {
+      flex: 1;
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 6px;
+      color: #e4e6ea;
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select:focus { border-color: #6366f1; }
+
+    button#scrapeBtn {
+      width: 100%;
+      padding: 10px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button#scrapeBtn:hover:not(:disabled) { background: #4f52cc; }
+    button#scrapeBtn:disabled { background: #3a3d55; color: #6b7280; cursor: not-allowed; }
+
+    #status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #9ca3af;
+      min-height: 18px;
+    }
+
+    #status.error { color: #f87171; }
+    #status.success { color: #22c55e; }
+
+    .result-area {
+      display: none;
+      margin-top: 14px;
+    }
+
+    .result-section {
+      margin-bottom: 12px;
+    }
+
+    .result-section h2 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .speaker-card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .speaker-name { font-weight: 600; color: #e4e6ea; }
+    .speaker-meta { color: #9ca3af; margin-top: 2px; }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      background: #1e2235;
+      border: 1px solid #2a2d3a;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #a5b4fc;
+    }
+
+    .text-value {
+      font-size: 12px;
+      color: #d1d5db;
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .copy-btn {
+      width: 100%;
+      padding: 7px;
+      background: transparent;
+      color: #6366f1;
+      border: 1px solid #6366f1;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 4px;
+    }
+
+    .copy-btn:hover { background: #1e1f3a; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid #4f52cc;
+      border-top-color: #a5b4fc;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <h1><span class="dot"></span> Web Scraping Agent</h1>
+
+  <div class="url-box" id="urlDisplay">Loading…</div>
+
+  <div class="focus-row">
+    <label for="focusSelect">Focus:</label>
+    <select id="focusSelect">
+      <option value="all">All content</option>
+      <option value="speakers">Speakers &amp; presenters</option>
+      <option value="schedule">Schedule &amp; agenda</option>
+    </select>
+  </div>
+
+  <button id="scrapeBtn">Extract content</button>
+
+  <div id="status"></div>
+
+  <div class="result-area" id="resultArea">
+    <div class="result-section" id="titleSection" style="display:none">
+      <h2>Title</h2>
+      <div class="text-value" id="titleValue"></div>
+    </div>
+
+    <div class="result-section" id="speakersSection" style="display:none">
+      <h2>Speakers</h2>
+      <div id="speakersList"></div>
+    </div>
+
+    <div class="result-section" id="topicsSection" style="display:none">
+      <h2>Topics</h2>
+      <div class="tag-list" id="topicsList"></div>
+    </div>
+
+    <div class="result-section" id="datesSection" style="display:none">
+      <h2>Dates</h2>
+      <div class="text-value" id="datesValue"></div>
+    </div>
+
+    <button class="copy-btn" id="copyBtn">Copy full JSON</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
