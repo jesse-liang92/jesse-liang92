@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import logging
+import logging.handlers
 import os
 import pathlib
 import sys
@@ -179,7 +180,7 @@ def _outlook_to_gcal_body(event: dict[str, Any]) -> dict[str, Any]:
     end_dt = event["end"].get("dateTime") or event["end"].get("date")
 
     body: dict[str, Any] = {
-        "summary": event.get("subject", "(No title)"),
+        "summary": event.get("subject") or "(No title)",
         "start": {},
         "end": {},
         "extendedProperties": {
