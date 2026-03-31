@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer for calendar_sync agent (every 15 min)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

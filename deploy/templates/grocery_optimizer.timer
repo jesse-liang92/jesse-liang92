@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer for grocery_optimizer agent (Saturday 08:00 PT)
+
+[Timer]
+OnCalendar=Sat *-*-* 08:00:00 America/Los_Angeles
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target

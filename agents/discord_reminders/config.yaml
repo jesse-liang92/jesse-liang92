@@ -1,0 +1,12 @@
+bot:
+  prefix: "!"
+  db_path: "~/.local/share/allyx/reminders.db"
+
+llm:
+  confidence_threshold: 0.7   # Below this, ask for clarification
+  timeout_seconds: 20
+
+discord:
+  channel: "reminders"
+  reminders_webhook: ${DISCORD_REMINDERS_WEBHOOK}
+  status_channel_webhook: ${DISCORD_STATUS_WEBHOOK}

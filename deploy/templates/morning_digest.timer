@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer for morning_digest agent (daily 06:00 PT)
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 America/Los_Angeles
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,21 @@
+outlook:
+  tenant_id: ${MS_TENANT_ID}
+  client_id: ${MS_CLIENT_ID}
+  scope: "Calendars.Read"
+  sync_window_days: 14
+
+google:
+  calendar_id: "work_sync"
+  credentials_path: "~/.config/allyx/google_creds.json"
+  token_path: "~/.config/allyx/google_token.json"
+
+sync:
+  dedup_key: "outlook_id"
+  update_existing: true
+  categories_to_skip:
+    - "Personal"
+    - "Blocked"
+  poll_interval_minutes: 15
+
+discord:
+  status_channel_webhook: ${DISCORD_STATUS_WEBHOOK}

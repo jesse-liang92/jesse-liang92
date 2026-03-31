@@ -1,0 +1,28 @@
+schedule:
+  run_at: "06:00"         # Local time (PT)
+  timezone: "America/Los_Angeles"
+
+google:
+  calendar_id: "primary"
+  credentials_path: "~/.config/allyx/google_creds.json"
+  token_path: "~/.config/allyx/google_token.json"
+  lookahead_hours: 18     # Events to include (midnight + 18h covers full workday)
+
+microsoft:
+  tenant_id: ${MS_TENANT_ID}
+  client_id: ${MS_CLIENT_ID}
+  todo_list_name: "Tasks"  # Name of the To Do list to pull
+
+weather:
+  api_key: ${OPENWEATHERMAP_API_KEY}
+  location: "Los Angeles, US"
+  units: "imperial"
+
+obsidian:
+  vault_path: "~/obsidian-vault"
+  daily_notes_dir: "Daily Notes"
+
+discord:
+  channel: "calendar"
+  status_channel_webhook: ${DISCORD_STATUS_WEBHOOK}
+  calendar_webhook: ${DISCORD_CALENDAR_WEBHOOK}

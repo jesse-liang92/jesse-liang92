@@ -1,0 +1,42 @@
+[
+  {
+    "id": "AAMkAGE0MjQ3M",
+    "subject": "Q2 Sprint Kickoff",
+    "start": {"dateTime": "2026-04-01T14:00:00Z", "timeZone": "UTC"},
+    "end":   {"dateTime": "2026-04-01T15:00:00Z", "timeZone": "UTC"},
+    "location": {"displayName": "BioSpace LA, 11150 Santa Monica Blvd"},
+    "categories": [],
+    "isCancelled": false,
+    "bodyPreview": "Kickoff for Q2 sprint planning"
+  },
+  {
+    "id": "AAMkAGE0MjQ3N",
+    "subject": "Personal Blocked",
+    "start": {"dateTime": "2026-04-02T10:00:00Z", "timeZone": "UTC"},
+    "end":   {"dateTime": "2026-04-02T11:00:00Z", "timeZone": "UTC"},
+    "location": {"displayName": ""},
+    "categories": ["Personal"],
+    "isCancelled": false,
+    "bodyPreview": ""
+  },
+  {
+    "id": "AAMkAGE0MjQ3O",
+    "subject": "Cancelled Meeting",
+    "start": {"dateTime": "2026-04-03T09:00:00Z", "timeZone": "UTC"},
+    "end":   {"dateTime": "2026-04-03T10:00:00Z", "timeZone": "UTC"},
+    "location": {"displayName": ""},
+    "categories": [],
+    "isCancelled": true,
+    "bodyPreview": ""
+  },
+  {
+    "id": "AAMkAGE0MjQ3P",
+    "subject": "All-Day Event",
+    "start": {"date": "2026-04-04"},
+    "end":   {"date": "2026-04-05"},
+    "location": {"displayName": ""},
+    "categories": [],
+    "isCancelled": false,
+    "bodyPreview": ""
+  }
+]

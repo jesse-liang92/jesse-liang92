@@ -1,0 +1,22 @@
+home_address: ${HOME_ADDRESS}
+default_destination: ${BIOSPACE_ADDRESS}
+
+commute:
+  buffer_minutes: 10
+  earliest_ping_time: "06:00"    # Don't ping before this (local time)
+  latest_ping_time: "09:30"      # Don't ping after this (assume already at work)
+  traffic_model: "pessimistic"   # best_guess | pessimistic | optimistic
+  check_time: "05:30"            # When to run the check each day
+
+google_maps:
+  api_key: ${GOOGLE_MAPS_API_KEY}
+
+google:
+  calendar_id: "primary"
+  credentials_path: "~/.config/allyx/google_creds.json"
+  token_path: "~/.config/allyx/google_token.json"
+
+discord:
+  channel: "commute"
+  commute_webhook: ${DISCORD_COMMUTE_WEBHOOK}
+  status_channel_webhook: ${DISCORD_STATUS_WEBHOOK}

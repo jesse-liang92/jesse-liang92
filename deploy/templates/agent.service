@@ -1,0 +1,19 @@
+[Unit]
+Description=Ally X Agent: %i
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jesse
+WorkingDirectory=/home/jesse/allyx-agents
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/home/jesse/allyx-agents/.env
+ExecStart=/home/jesse/allyx-agents/.venv/bin/python agents/%i/agent.py
+Restart=on-failure
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

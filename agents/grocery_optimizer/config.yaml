@@ -1,0 +1,14 @@
+microsoft:
+  tenant_id: ${MS_TENANT_ID}
+  client_id: ${MS_CLIENT_ID}
+  todo_list_name: "Groceries"   # Name of the To Do list to pull
+
+schedule:
+  run_at: "08:00"               # Saturday morning
+  day_of_week: "saturday"       # Also triggerable via !groceries Discord command
+
+discord:
+  channel: "groceries"
+  groceries_webhook: ${DISCORD_GROCERIES_WEBHOOK}
+  status_channel_webhook: ${DISCORD_STATUS_WEBHOOK}
+  bot_prefix: "!"

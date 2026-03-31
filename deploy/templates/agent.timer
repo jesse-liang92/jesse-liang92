@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer for %i agent
+
+[Timer]
+# Override OnCalendar in the drop-in for agent-specific schedule
+OnCalendar=*-*-* 06:00:00
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target
