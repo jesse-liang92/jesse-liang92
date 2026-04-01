@@ -33,7 +33,7 @@ and posting outputs to a personal Discord server.
 | `agents/discord_reminders` | Yes | Always-on bot | `#reminders` | Complete + tested |
 | `agents/grocery_optimizer` | Yes | Saturday 08:00 PT | `#groceries` | Complete + tested |
 | `agents/package_tracker` | Optional | Every 2 hours (systemd timer) | `#packages` | Complete + tested |
-| `agents/finance_digest` | — | — | `#finance` | **Not yet built** |
+| `agents/finance_digest` | Yes | Weekdays 1:00 PM PT | `#finance` | Complete + tested |
 | `agents/bill_monitor` | — | — | `#bills` | **Not yet built** |
 
 ### Deploy
@@ -55,6 +55,7 @@ agents/commute_ping/tests/         → 19/19 pass (deterministic tests only)
 agents/discord_reminders/tests/    → 4/4 pass  (DB logic only)
 agents/grocery_optimizer/tests/    → 1/1 pass  (embed builder only)
 agents/package_tracker/tests/      → 22/22 pass (DB + schema + embed + edge cases)
+agents/finance_digest/tests/       → 26/26 pass (schema + alerts + embed + edge cases)
 ```
 
 **Tests requiring Ollama (run on the Ally X):**
@@ -67,20 +68,13 @@ python tests/run_all.py --suite behavioral   # must be >90% before deploy
 
 ## What Still Needs To Be Done
 
-### 1. `finance_digest` agent
-**Purpose:** Daily summary of watched stocks/ETFs posted to `#finance`.
+### ~~1. `finance_digest` agent~~ DONE
 
-**Suggested approach:**
-- Pull price data from Yahoo Finance (via `yfinance` library — no API key needed)
-- LLM usage: YES — generate a natural-language summary, flag notable moves
-- Schedule: Weekdays at market close (4:00 PM ET = 1:00 PM PT)
-- Schema already defined in `lib/schemas.py` as `FinanceDigestResponse`
-
-**Config needed:** Watchlist of tickers (store in `config.yaml`)
+Built and tested (26/26 local tests pass). Uses `yfinance` for data, LLM for summary, posts to `#finance` weekdays at 1:00 PM PT.
 
 ---
 
-### 2. `bill_monitor` agent
+### 2. `bill_monitor` agent (deprioritized)
 **Purpose:** Track recurring bills, alert when due within 7 days, flag overdue.
 
 **Suggested approach:**

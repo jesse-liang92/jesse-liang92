@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer for finance_digest agent (weekdays at market close)
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 13:00:00 America/Los_Angeles
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

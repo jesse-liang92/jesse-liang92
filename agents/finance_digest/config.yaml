@@ -1,0 +1,53 @@
+schedule:
+  # Weekdays at market close: 4:00 PM ET = 1:00 PM PT
+  cron: "Mon-Fri 13:00 America/Los_Angeles"
+
+watchlist:
+  # --- Broad market ---
+  - ticker: SPY
+    label: "S&P 500"
+  - ticker: QQQ
+    label: "Nasdaq 100"
+  - ticker: DIA
+    label: "Dow Jones"
+  - ticker: IWM
+    label: "Russell 2000"
+
+  # --- AI / semiconductor ---
+  - ticker: NVDA
+    label: "NVIDIA"
+  - ticker: ASML
+    label: "ASML"
+  - ticker: AMD
+    label: "AMD"
+  - ticker: MSFT
+    label: "Microsoft"
+  - ticker: GOOG
+    label: "Alphabet"
+
+  # --- AI-adjacent / tech ---
+  - ticker: NFLX
+    label: "Netflix"
+  - ticker: META
+    label: "Meta"
+  - ticker: AMZN
+    label: "Amazon"
+
+  # --- Biotech (Partillion-relevant) ---
+  - ticker: XBI
+    label: "Biotech ETF"
+  - ticker: IBB
+    label: "iShares Biotech"
+  - ticker: ILMN
+    label: "Illumina"
+  - ticker: TMO
+    label: "Thermo Fisher"
+
+llm:
+  enabled: true
+  timeout_seconds: 45
+
+discord:
+  channel: "finance"
+  # Set DISCORD_FINANCE_WEBHOOK in your .env file
+  status_channel: "agent-status"

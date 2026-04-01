@@ -17,5 +17,8 @@ google-auth-oauthlib==1.2.1
 # Discord bot (discord_reminders)
 discord.py==2.3.2
 
+# Finance data (finance_digest)
+yfinance==1.2.0
+
 # Testing
 pytest==8.3.3
