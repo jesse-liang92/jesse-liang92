@@ -1,0 +1,32 @@
+schedule:
+  # Check every 5 minutes during active hours, skip overnight.
+  # Drop pattern analysis (n=11 drops, Sep 2024 – Mar 2026, using published_at):
+  # - No regular cadence (6–143 day gaps). Human-listed artisan items.
+  # - Primary window: 1 PM – 8:30 PM PT (bulk of drops).
+  # - Early AM tail: 6:01 AM and 8:08 AM observed for straggler items
+  #   published the morning after an evening batch.
+  # - Multi-day drops happen: items trickle out over 1–2 days.
+  # Poll every 5 min from 6 AM – 9 PM PT to cover all observed windows.
+  interval_minutes: 3
+  active_hours_start: 6.01 # PT — earliest observed publish: 6:01 AM
+  active_hours_end: 21     # PT — latest observed publish: 8:25 PM
+
+stores:
+  pvramid_chroma:
+    name: "Pvramid Flash Chroma"
+    collection_url: "https://pvramid.com/collections/flash-chroma-drops"
+    products_json: "https://pvramid.com/collections/flash-chroma-drops/products.json"
+    # Only alert on products created after the agent first runs
+    # (avoids flooding Discord with existing products on first boot)
+
+database:
+  path: "~/.config/allyx/drop_monitor.db"
+
+llm:
+  # No LLM needed — purely deterministic
+  enabled: false
+
+discord:
+  channel: "drops"
+  # Set DISCORD_DROPS_WEBHOOK in your .env file
+  status_channel: "agent-status"

@@ -29,6 +29,7 @@ _WEBHOOK_ENV_KEYS: dict[str, str] = {
     "packages": "DISCORD_PACKAGES_WEBHOOK",
     "bills": "DISCORD_BILLS_WEBHOOK",
     "agent-status": "DISCORD_STATUS_WEBHOOK",
+    "drops": "DISCORD_DROPS_WEBHOOK",
 }
 
 
