@@ -18,17 +18,24 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-# Channel webhook URLs — set in .env
-WEBHOOKS: dict[str, str] = {
-    "calendar": os.getenv("DISCORD_CALENDAR_WEBHOOK", ""),
-    "commute": os.getenv("DISCORD_COMMUTE_WEBHOOK", ""),
-    "reminders": os.getenv("DISCORD_REMINDERS_WEBHOOK", ""),
-    "groceries": os.getenv("DISCORD_GROCERIES_WEBHOOK", ""),
-    "finance": os.getenv("DISCORD_FINANCE_WEBHOOK", ""),
-    "packages": os.getenv("DISCORD_PACKAGES_WEBHOOK", ""),
-    "bills": os.getenv("DISCORD_BILLS_WEBHOOK", ""),
-    "agent-status": os.getenv("DISCORD_STATUS_WEBHOOK", ""),
+# Channel → env-var name mapping.  Resolved at call time so that
+# agents which call load_dotenv() after importing this module still work.
+_WEBHOOK_ENV_KEYS: dict[str, str] = {
+    "calendar": "DISCORD_CALENDAR_WEBHOOK",
+    "commute": "DISCORD_COMMUTE_WEBHOOK",
+    "reminders": "DISCORD_REMINDERS_WEBHOOK",
+    "groceries": "DISCORD_GROCERIES_WEBHOOK",
+    "finance": "DISCORD_FINANCE_WEBHOOK",
+    "packages": "DISCORD_PACKAGES_WEBHOOK",
+    "bills": "DISCORD_BILLS_WEBHOOK",
+    "agent-status": "DISCORD_STATUS_WEBHOOK",
 }
+
+
+def _get_webhook_url(channel: str) -> str:
+    """Look up webhook URL at call time, not import time."""
+    env_key = _WEBHOOK_ENV_KEYS.get(channel, "")
+    return os.getenv(env_key, "") if env_key else ""
 
 
 def _post_webhook(url: str, payload: dict[str, Any], dry_run: bool = False) -> bool:
@@ -64,7 +71,7 @@ def send_message(
         content: Message text (Discord markdown supported).
         dry_run: If True, print instead of posting.
     """
-    url = WEBHOOKS.get(channel, "")
+    url = _get_webhook_url(channel)
     return _post_webhook(url, {"content": content}, dry_run=dry_run)
 
 
@@ -95,7 +102,7 @@ def send_embed(
     if fields:
         embed["fields"] = fields
 
-    url = WEBHOOKS.get(channel, "")
+    url = _get_webhook_url(channel)
     return _post_webhook(url, {"embeds": [embed]}, dry_run=dry_run)
 
 

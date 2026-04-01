@@ -20,8 +20,17 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b-q8_0")
+# Defaults — overridden by .env at call time
+_DEFAULT_OLLAMA_URL = "http://localhost:11434"
+_DEFAULT_OLLAMA_MODEL = "qwen3.5:9b"
+
+
+def _get_ollama_url() -> str:
+    return os.getenv("OLLAMA_URL", _DEFAULT_OLLAMA_URL)
+
+
+def _get_ollama_model() -> str:
+    return os.getenv("OLLAMA_MODEL", _DEFAULT_OLLAMA_MODEL)
 
 _PROMPT_TEMPLATE = """\
 You are a personal automation assistant. Respond ONLY with valid JSON matching this schema. No markdown, no explanation, no preamble.
@@ -67,14 +76,14 @@ def _parse_response(raw: str, model_cls: Type[T]) -> T | None:
 def _chat(messages: list[dict], timeout: float) -> str | None:
     """Send messages to Ollama /api/chat and return the assistant content."""
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": _get_ollama_model(),
         "messages": messages,
         "stream": False,
         "options": {"temperature": 0.1},
     }
     try:
         with httpx.Client(timeout=timeout) as client:
-            resp = client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            resp = client.post(f"{_get_ollama_url()}/api/chat", json=payload)
             resp.raise_for_status()
             return resp.json()["message"]["content"]
     except httpx.TimeoutException:

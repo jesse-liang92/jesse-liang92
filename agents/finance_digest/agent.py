@@ -135,27 +135,19 @@ def generate_summary(
     """Ask the LLM to generate a natural-language market summary."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    # Build a compact text representation for the LLM
-    lines = [f"Date: {now}", ""]
+    # Build a compact text representation — keep token count low
+    lines = [f"{now}"]
     for item in market_data:
-        arrow = "▲" if item["change"] >= 0 else "▼"
-        lines.append(
-            f"{item['label']} ({item['ticker']}): ${item['price']:.2f} "
-            f"{arrow} {item['change']:+.2f} ({item['change_pct']:+.2f}%)"
-        )
-
-    if alerts:
-        lines.append("")
-        lines.append("Notable moves:")
-        for alert in alerts:
-            lines.append(f"  - {alert}")
+        lines.append(f"{item['ticker']} ${item['price']:.2f} {item['change_pct']:+.1f}%")
 
     input_data = "\n".join(lines)
 
     task = (
-        "Generate a concise market digest. Write a 2-3 sentence summary of today's "
-        "market action. Highlight sector trends (tech, biotech, broad market). "
-        "Include any notable individual movers. Be direct — no filler."
+        "Write a 2-3 sentence market summary for a biotech R&D director who also tracks "
+        "AI/semis. Be analytical, not hype — say 'rose' not 'surged' for <5% moves. "
+        "Compare small-cap vs large-cap performance to signal breadth. "
+        "Flag life science tools (ILMN, TMO) and biotech ETFs specifically. "
+        "No generic sentiment statements — only observations supported by the numbers."
     )
 
     return llm.query(task, input_data, FinanceDigestResponse, timeout=timeout)

@@ -45,7 +45,7 @@ watchlist:
 
 llm:
   enabled: true
-  timeout_seconds: 45
+  timeout_seconds: 120
 
 discord:
   channel: "finance"
