@@ -80,6 +80,20 @@ def init_db(db_path: str) -> sqlite3.Connection:
             UNIQUE(store, product_id)
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS restock_tracking (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            store           TEXT NOT NULL,
+            product_id      TEXT NOT NULL,
+            handle          TEXT NOT NULL,
+            title           TEXT NOT NULL,
+            price           TEXT DEFAULT '',
+            image_url       TEXT DEFAULT '',
+            available       INTEGER DEFAULT 0,
+            last_checked_at TEXT NOT NULL,
+            UNIQUE(store, product_id)
+        )
+    """)
     conn.commit()
     return conn
 
@@ -139,6 +153,57 @@ def reset_seen_products(conn: sqlite3.Connection, store: str | None = None) -> i
 
 
 # ---------------------------------------------------------------------------
+# Restock tracking persistence
+# ---------------------------------------------------------------------------
+
+def _is_product_available(product: dict[str, Any]) -> bool:
+    """Check if any variant is available."""
+    for variant in product.get("variants", []):
+        if variant.get("available", False):
+            return True
+    return False
+
+
+def get_tracked_availability(conn: sqlite3.Connection, store: str, product_id: str) -> bool | None:
+    """Get last known availability. Returns None if not tracked yet."""
+    cur = conn.execute(
+        "SELECT available FROM restock_tracking WHERE store=? AND product_id=?",
+        (store, product_id),
+    )
+    row = cur.fetchone()
+    return bool(row[0]) if row else None
+
+
+def upsert_restock_tracking(
+    conn: sqlite3.Connection,
+    store: str,
+    product: dict[str, Any],
+    available: bool,
+) -> None:
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        """INSERT INTO restock_tracking
+           (store, product_id, handle, title, price, image_url, available, last_checked_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(store, product_id) DO UPDATE SET
+               available=excluded.available,
+               price=excluded.price,
+               last_checked_at=excluded.last_checked_at""",
+        (
+            store,
+            str(product["id"]),
+            product.get("handle", ""),
+            product.get("title", "Unknown"),
+            _get_price(product),
+            _get_image(product),
+            int(available),
+            now,
+        ),
+    )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
 # Shopify product fetching
 # ---------------------------------------------------------------------------
 
@@ -164,6 +229,7 @@ def _get_product_url(product: dict[str, Any], store_key: str) -> str:
     # For now, hardcode known stores
     base_urls = {
         "pvramid_chroma": "https://pvramid.com",
+        "pvramid_instock": "https://pvramid.com",
     }
     base = base_urls.get(store_key, "")
     if base and handle:
@@ -241,6 +307,37 @@ def build_drop_embed(product: dict[str, Any], store_name: str) -> dict[str, Any]
         "description": product_url if product_url else "New item listed!",
         "fields": fields,
         "color": 0xFFD700,  # gold
+    }
+
+    if image_url:
+        embed["image"] = {"url": image_url}
+
+    return embed
+
+
+def build_restock_embed(product: dict[str, Any], store_name: str) -> dict[str, Any]:
+    """Build a Discord embed for a restocked product."""
+    title = product.get("title", "Restocked Product")
+    price = _get_price(product)
+    image_url = _get_image(product)
+    handle = product.get("handle", "")
+    product_url = f"https://pvramid.com/products/{handle}" if handle else ""
+
+    fields: list[dict[str, Any]] = []
+
+    if price:
+        fields.append({"name": "Price", "value": price, "inline": True})
+
+    fields.append({"name": "Store", "value": store_name, "inline": True})
+
+    if product_url:
+        fields.append({"name": "Link", "value": f"[Buy Now]({product_url})", "inline": False})
+
+    embed: dict[str, Any] = {
+        "title": f":green_circle: BACK IN STOCK: {title}",
+        "description": product_url if product_url else "Item is available again!",
+        "fields": fields,
+        "color": 0x57F287,  # green
     }
 
     if image_url:
@@ -328,6 +425,75 @@ def poll_stores(
     return total_new
 
 
+def poll_restocks(
+    conn: sqlite3.Connection,
+    config: dict,
+    dry_run: bool = False,
+    seed: bool = False,
+) -> int:
+    """
+    Poll restock-watch stores for availability changes.
+    Returns count of restocked products found.
+
+    If seed=True, records current availability without alerting.
+    """
+    stores = config.get("restock_watches", {})
+    total_restocked = 0
+
+    for store_key, store_config in stores.items():
+        store_name = store_config.get("name", store_key)
+        products_url = store_config.get("products_json", "")
+
+        if not products_url:
+            logger.warning("No products_json URL for restock watch %s", store_key)
+            continue
+
+        logger.info("Checking restocks for %s...", store_name)
+        products = fetch_products(products_url)
+
+        if products is None:
+            post_error(AGENT, f"Failed to fetch restocks for {store_name}", dry_run=dry_run)
+            continue
+
+        logger.info("Tracking %d products in %s", len(products), store_name)
+
+        for product in products:
+            product_id = str(product.get("id", ""))
+            if not product_id:
+                continue
+
+            available = _is_product_available(product)
+            prev_available = get_tracked_availability(conn, store_key, product_id)
+
+            # Update tracking state
+            upsert_restock_tracking(conn, store_key, product, available)
+
+            if seed:
+                logger.info("Restock tracked: %s (available=%s)", product.get("title", "?"), available)
+                continue
+
+            # Alert on restock: was unavailable (or unknown), now available
+            if available and prev_available is not None and not prev_available:
+                title = product.get("title", "Unknown")
+                logger.info("RESTOCKED: %s", title)
+
+                embed = build_restock_embed(product, store_name)
+                send_embed(
+                    channel="drops",
+                    title=embed["title"],
+                    description=embed["description"],
+                    fields=embed["fields"],
+                    color=embed["color"],
+                    dry_run=dry_run,
+                )
+                total_restocked += 1
+
+        if seed:
+            logger.info("Seeded restock tracking for %d products in %s", len(products), store_name)
+
+    return total_restocked
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -371,12 +537,12 @@ def main() -> None:
     # --- Seed (first run) ---
     if args.seed:
         poll_stores(db_conn, config, dry_run=True, seed=True)
-        print("Seeded existing products. Future runs will only alert on new items.")
+        poll_restocks(db_conn, config, dry_run=True, seed=True)
+        print("Seeded existing products and restock tracking. Future runs will only alert on changes.")
         return
 
     # --- Poll (single or watch mode) ---
-    def _run_poll() -> None:
-        """Single poll with active hours check."""
+    def _is_active_hours() -> bool:
         schedule = config.get("schedule", {})
         start_hour = schedule.get("active_hours_start")
         end_hour = schedule.get("active_hours_end")
@@ -386,27 +552,52 @@ def main() -> None:
             if not (float(start_hour) <= current < float(end_hour)):
                 logger.info("Outside active hours (%.2f-%.2f PT, now %.2f), sleeping",
                             float(start_hour), float(end_hour), current)
-                return
+                return False
+        return True
 
+    def _run_poll() -> None:
+        """Single poll: new drops + restocks."""
+        if not _is_active_hours():
+            return
         try:
             new_count = poll_stores(db_conn, config, dry_run=args.dry_run)
-            logger.info("Poll complete. %d new product(s) found.", new_count)
+            restock_count = poll_restocks(db_conn, config, dry_run=args.dry_run)
+            logger.info("Poll complete. %d new drop(s), %d restock(s).", new_count, restock_count)
         except Exception as exc:
             logger.exception("drop_monitor failed")
             post_error(AGENT, str(exc), dry_run=args.dry_run)
 
     if args.watch:
-        interval = int(config.get("schedule", {}).get("interval_minutes", 5))
-        logger.info("Watch mode started — polling every %d minutes. Ctrl+C to stop.", interval)
+        drop_interval = int(config.get("schedule", {}).get("interval_minutes", 3))
+        restock_interval = int(config.get("restock_schedule", {}).get("interval_minutes", 30))
+        logger.info("Watch mode — drops every %dm, restocks every %dm. Ctrl+C to stop.",
+                     drop_interval, restock_interval)
         # Seed on first watch if DB is empty
         if not list_seen_products(db_conn):
-            logger.info("No products in DB, seeding existing products...")
+            logger.info("No products in DB, seeding...")
             poll_stores(db_conn, config, dry_run=True, seed=True)
-            logger.info("Seed complete. Now watching for new drops.")
+            poll_restocks(db_conn, config, dry_run=True, seed=True)
+            logger.info("Seed complete. Now watching.")
         try:
+            cycles = 0
+            restock_every_n = max(1, restock_interval // drop_interval)
             while True:
-                _run_poll()
-                time.sleep(interval * 60)
+                if not _is_active_hours():
+                    time.sleep(drop_interval * 60)
+                    continue
+                try:
+                    # Always check drops
+                    new_count = poll_stores(db_conn, config, dry_run=args.dry_run)
+                    # Check restocks less frequently
+                    restock_count = 0
+                    if cycles % restock_every_n == 0:
+                        restock_count = poll_restocks(db_conn, config, dry_run=args.dry_run)
+                    logger.info("Cycle %d: %d new drop(s), %d restock(s).", cycles, new_count, restock_count)
+                except Exception as exc:
+                    logger.exception("Poll cycle failed")
+                    post_error(AGENT, str(exc), dry_run=args.dry_run)
+                cycles += 1
+                time.sleep(drop_interval * 60)
         except KeyboardInterrupt:
             logger.info("Watch mode stopped.")
     else:

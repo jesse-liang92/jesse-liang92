@@ -19,6 +19,15 @@ stores:
     # Only alert on products created after the agent first runs
     # (avoids flooding Discord with existing products on first boot)
 
+restock_schedule:
+  interval_minutes: 30
+
+restock_watches:
+  pvramid_instock:
+    name: "Pvramid In-Stock Artisan"
+    collection_url: "https://pvramid.com/collections/in-stock-artisan-field-cloths"
+    products_json: "https://pvramid.com/collections/in-stock-artisan-field-cloths/products.json"
+
 database:
   path: "~/.config/allyx/drop_monitor.db"
 
