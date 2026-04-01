@@ -20,7 +20,7 @@ and posting outputs to a personal Discord server.
 |---|---|
 | `lib/llm.py` | Ollama client wrapper — posts to `localhost:11434/api/chat`, validates response against Pydantic schema, retries once with JSON nudge, returns `None` on failure |
 | `lib/discord_out.py` | `send_message`, `send_embed`, `post_error`, `post_status` via Discord webhooks |
-| `lib/schemas.py` | Pydantic v2 models: `MorningDigestResponse`, `LocationResolutionResponse`, `ReminderParseResponse`, `GroceryOptimizerResponse`, `FinanceDigestResponse`, `BillAlertResponse` |
+| `lib/schemas.py` | Pydantic v2 models: `MorningDigestResponse`, `LocationResolutionResponse`, `ReminderParseResponse`, `GroceryOptimizerResponse`, `PackageStatusResponse`, `FinanceDigestResponse`, `BillAlertResponse` |
 | `lib/test_runner.py` | Model-swap test harness used by `tests/run_all.py` |
 
 ### Agents Built
@@ -32,7 +32,7 @@ and posting outputs to a personal Discord server.
 | `agents/commute_ping` | Optional | Daily 05:30 PT | `#commute` | Complete + tested |
 | `agents/discord_reminders` | Yes | Always-on bot | `#reminders` | Complete + tested |
 | `agents/grocery_optimizer` | Yes | Saturday 08:00 PT | `#groceries` | Complete + tested |
-| `agents/package_tracker` | — | — | `#packages` | **Not yet built** |
+| `agents/package_tracker` | Optional | Every 2 hours (systemd timer) | `#packages` | Complete + tested |
 | `agents/finance_digest` | — | — | `#finance` | **Not yet built** |
 | `agents/bill_monitor` | — | — | `#bills` | **Not yet built** |
 
@@ -54,6 +54,7 @@ agents/calendar_sync/tests/        → 16/16 pass
 agents/commute_ping/tests/         → 19/19 pass (deterministic tests only)
 agents/discord_reminders/tests/    → 4/4 pass  (DB logic only)
 agents/grocery_optimizer/tests/    → 1/1 pass  (embed builder only)
+agents/package_tracker/tests/      → 22/22 pass (DB + schema + embed + edge cases)
 ```
 
 **Tests requiring Ollama (run on the Ally X):**
@@ -66,21 +67,7 @@ python tests/run_all.py --suite behavioral   # must be >90% before deploy
 
 ## What Still Needs To Be Done
 
-### 1. `package_tracker` agent
-**Purpose:** Monitor package shipments and post status updates to `#packages`.
-
-**Suggested approach:**
-- Poll tracking APIs (UPS, FedEx, USPS) or scrape tracking pages
-- Store tracking numbers + last-known status in local SQLite
-- Post to `#packages` when status changes
-- LLM usage: optional — only for parsing unstructured carrier status text
-- Schedule: every 2 hours via systemd timer
-
-**Config needed:** Carrier API keys (UPS OAuth, FedEx sandbox key, USPS user ID)
-
----
-
-### 2. `finance_digest` agent
+### 1. `finance_digest` agent
 **Purpose:** Daily summary of watched stocks/ETFs posted to `#finance`.
 
 **Suggested approach:**
@@ -93,7 +80,7 @@ python tests/run_all.py --suite behavioral   # must be >90% before deploy
 
 ---
 
-### 3. `bill_monitor` agent
+### 2. `bill_monitor` agent
 **Purpose:** Track recurring bills, alert when due within 7 days, flag overdue.
 
 **Suggested approach:**
@@ -105,7 +92,7 @@ python tests/run_all.py --suite behavioral   # must be >90% before deploy
 
 ---
 
-### 4. Deployment on the Ally X
+### 3. Deployment on the Ally X
 
 Once agents are done and tests pass on the local model:
 ```bash
@@ -190,6 +177,12 @@ OPENWEATHERMAP_API_KEY=
 
 HOME_ADDRESS=
 BIOSPACE_ADDRESS=11150 Santa Monica Blvd, Los Angeles, CA 90025
+
+UPS_CLIENT_ID=
+UPS_CLIENT_SECRET=
+FEDEX_CLIENT_ID=
+FEDEX_CLIENT_SECRET=
+USPS_USER_ID=
 
 DISCORD_BOT_TOKEN=
 DISCORD_CALENDAR_WEBHOOK=

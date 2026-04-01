@@ -19,7 +19,7 @@ ROG Ally X (headless, always-on)
 │   ├── commute-ping.service
 │   ├── discord-reminders.service
 │   ├── grocery-optimizer.service
-│   ├── package-tracker.service
+│   ├── package-tracker.service + .timer
 │   ├── finance-digest.service
 │   └── bill-monitor.service
 ├── Shared libs (see /lib)
@@ -64,7 +64,11 @@ ROG Ally X (headless, always-on)
 │   │   ├── agent.py
 │   │   ├── config.yaml
 │   │   └── tests/
-│   └── grocery_optimizer/
+│   ├── grocery_optimizer/
+│   │   ├── agent.py
+│   │   ├── config.yaml
+│   │   └── tests/
+│   └── package_tracker/
 │       ├── agent.py
 │       ├── config.yaml
 │       └── tests/
@@ -134,4 +138,7 @@ Input:
 | Google Maps Directions | API key | commute_ping |
 | OpenWeatherMap | API key | morning_digest |
 | Discord Bot | Bot token + webhook URLs | All agents |
+| UPS | OAuth2 client ID + secret | package_tracker |
+| FedEx | OAuth2 client ID + secret | package_tracker |
+| USPS | Web Tools user ID | package_tracker |
 | Yahoo Finance / Finviz | API key or scraping | finance_digest |
