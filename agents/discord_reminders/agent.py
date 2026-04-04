@@ -21,6 +21,9 @@ import pathlib
 import sqlite3
 import sys
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+PT = ZoneInfo("America/Los_Angeles")
 from typing import Any
 
 import yaml
@@ -137,10 +140,12 @@ def mark_fired(conn: sqlite3.Connection, reminder_id: int) -> None:
 # ---------------------------------------------------------------------------
 
 def parse_reminder(user_message: str, confidence_threshold: float, timeout: float) -> ReminderParseResponse | None:
-    now_iso = datetime.utcnow().isoformat()
+    now_pt = datetime.now(PT).isoformat()
     task_desc = (
         f"Parse this reminder request into structured data. "
-        f"Current date/time (UTC): {now_iso}. "
+        f"Current date/time (Pacific Time): {now_pt}. "
+        "The user is in Pacific Time. Interpret all times as PT unless explicitly stated otherwise. "
+        "Store remind_at as an ISO 8601 string with UTC offset. "
         "If you cannot determine a time, set remind_at to null and confidence to 0."
     )
     result = llm.query(task_desc, f'"{user_message}"', ReminderParseResponse, timeout=timeout)
@@ -211,7 +216,7 @@ def build_bot(config: dict, db_conn: sqlite3.Connection, dry_run: bool):
             )
             try:
                 dt = datetime.fromisoformat(parsed.remind_at)
-                time_str = dt.strftime("%b %-d at %-I:%M %p UTC")
+                time_str = dt.astimezone(PT).strftime("%b %-d at %-I:%M %p PT")
             except Exception:
                 time_str = parsed.remind_at
 
@@ -230,7 +235,7 @@ def build_bot(config: dict, db_conn: sqlite3.Connection, dry_run: bool):
             for r in reminders:
                 try:
                     dt = datetime.fromisoformat(r["remind_at"])
-                    time_str = dt.strftime("%b %-d at %-I:%M %p UTC")
+                    time_str = dt.astimezone(PT).strftime("%b %-d at %-I:%M %p PT")
                 except Exception:
                     time_str = r["remind_at"]
                 rec = f" ({r['recurrence']})" if r["recurrence"] != "none" else ""
