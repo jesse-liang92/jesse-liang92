@@ -169,34 +169,51 @@ def get_directions(
     traffic_model: str,
     api_key: str,
 ) -> dict[str, Any] | None:
-    """Call Google Maps Directions API and return duration info."""
+    """Call Google Routes API and return duration info."""
     import httpx
 
-    params = {
-        "origin": origin,
-        "destination": destination,
-        "departure_time": int(departure_time.timestamp()),
-        "traffic_model": traffic_model,
-        "key": api_key,
+    # Map legacy traffic_model names to Routes API equivalents
+    routing_pref = "TRAFFIC_AWARE_OPTIMAL" if traffic_model == "pessimistic" else "TRAFFIC_AWARE"
+
+    request_body: dict[str, Any] = {
+        "origin": {"address": origin},
+        "destination": {"address": destination},
+        "travelMode": "DRIVE",
+        "routingPreference": routing_pref,
     }
+    # Routes API requires departureTime to be in the future; omit for "now"
+    if departure_time > datetime.now(timezone.utc):
+        request_body["departureTime"] = departure_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
     with httpx.Client(timeout=15.0) as client:
-        resp = client.get(
-            "https://maps.googleapis.com/maps/api/directions/json",
-            params=params,
+        resp = client.post(
+            "https://routes.googleapis.com/directions/v2:computeRoutes",
+            headers={
+                "X-Goog-Api-Key": api_key,
+                "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs.duration",
+            },
+            json=request_body,
         )
         resp.raise_for_status()
         data = resp.json()
 
-    if data.get("status") != "OK":
-        logger.error("Directions API error: %s", data.get("status"))
+    if "routes" not in data or not data["routes"]:
+        logger.error("Routes API returned no routes: %s", data)
         return None
 
-    leg = data["routes"][0]["legs"][0]
-    duration_in_traffic = leg.get("duration_in_traffic", leg["duration"])
+    route = data["routes"][0]
+    duration_secs = int(route["duration"].rstrip("s"))
+    distance_miles = route["distanceMeters"] / 1609.34
+
+    # Format human-readable strings
+    hours, mins = divmod(duration_secs // 60, 60)
+    duration_text = f"{hours} hr {mins} min" if hours else f"{mins} min"
+    distance_text = f"{distance_miles:.1f} mi"
+
     return {
-        "duration_seconds": duration_in_traffic["value"],
-        "duration_text": duration_in_traffic["text"],
-        "distance_text": leg["distance"]["text"],
+        "duration_seconds": duration_secs,
+        "duration_text": duration_text,
+        "distance_text": distance_text,
     }
 
 

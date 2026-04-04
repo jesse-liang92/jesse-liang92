@@ -22,7 +22,7 @@ T = TypeVar("T", bound=BaseModel)
 
 # Defaults — overridden by .env at call time
 _DEFAULT_OLLAMA_URL = "http://localhost:11434"
-_DEFAULT_OLLAMA_MODEL = "qwen3.5:9b"
+_DEFAULT_OLLAMA_MODEL = "gemma4:e4b"
 
 
 def _get_ollama_url() -> str:
@@ -59,8 +59,11 @@ def _build_prompt(schema_json: str, task_description: str, input_data: str) -> s
 
 
 def _parse_response(raw: str, model_cls: Type[T]) -> T | None:
-    """Strip optional markdown fences and validate against schema."""
+    """Strip thinking tags and markdown fences, then validate against schema."""
     text = raw.strip()
+    # Strip <think>...</think> blocks (used by some models)
+    import re
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
     if text.startswith("```"):
         # Strip ```json ... ``` or ``` ... ```
         lines = text.splitlines()

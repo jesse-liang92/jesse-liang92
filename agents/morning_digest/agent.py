@@ -180,6 +180,17 @@ def fetch_weather(config: dict) -> dict[str, Any]:
 # Formatting helpers
 # ---------------------------------------------------------------------------
 
+def _to_pt(iso_str: str) -> str:
+    """Convert an ISO datetime string to Pacific Time display."""
+    from zoneinfo import ZoneInfo
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        pt = dt.astimezone(ZoneInfo("America/Los_Angeles"))
+        return pt.strftime("%-I:%M %p PT")
+    except Exception:
+        return iso_str
+
+
 def _format_events_for_prompt(events: list[dict]) -> str:
     lines = []
     for ev in events:
@@ -188,7 +199,7 @@ def _format_events_for_prompt(events: list[dict]) -> str:
         title = ev.get("summary", "(No title)")
         location = ev.get("location", "")
         loc_str = f" @ {location}" if location else ""
-        lines.append(f"- {start} → {end}: {title}{loc_str}")
+        lines.append(f"- {_to_pt(start)} → {_to_pt(end)}: {title}{loc_str}")
     return "\n".join(lines) if lines else "No events today."
 
 
@@ -272,12 +283,6 @@ def run(config: dict, dry_run: bool = False) -> None:
         post_error(AGENT, f"GCal fetch failed: {exc}", dry_run=dry_run)
 
     try:
-        todos = fetch_todo_items(config)
-        logger.info("Fetched %d to-do items", len(todos))
-    except Exception as exc:
-        logger.warning("To Do fetch failed (non-fatal): %s", exc)
-
-    try:
         weather = fetch_weather(config)
         logger.info("Fetched weather: %s", weather)
     except Exception as exc:
@@ -296,10 +301,14 @@ def run(config: dict, dry_run: bool = False) -> None:
         "to-do items, and weather forecast, generate a morning briefing. "
         "Rules: lead with the most important/time-sensitive item; flag scheduling conflicts "
         "or back-to-back meetings with no buffer; note weather only if actionable; "
-        "keep full_briefing under 200 words; if meetings with external parties, note prep needed."
+        "keep full_briefing under 200 words. "
+        "Internal team members are: Anna-Marie, George, Devon, Megan, Joe, Zuly, Sean, John. "
+        "If a meeting title contains names NOT in this list, treat it as a customer/external meeting "
+        "and flag that prep is needed. Internal meetings don't need a prep callout. "
+        "All times are in Pacific Time (PT)."
     )
 
-    result = llm.query(task_description, input_data, MorningDigestResponse, timeout=45.0)
+    result = llm.query(task_description, input_data, MorningDigestResponse, timeout=120.0)
 
     if result is None:
         logger.error("LLM returned None — posting fallback")

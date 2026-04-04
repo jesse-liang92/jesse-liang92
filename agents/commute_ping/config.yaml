@@ -12,7 +12,7 @@ google_maps:
   api_key: ${GOOGLE_MAPS_API_KEY}
 
 google:
-  calendar_id: "primary"
+  calendar_id: "96kvjho3n87fjtk7h8msisecjl6d0bjp@import.calendar.google.com"
   credentials_path: "~/.config/allyx/google_creds.json"
   token_path: "~/.config/allyx/google_token.json"
 

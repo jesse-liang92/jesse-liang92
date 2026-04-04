@@ -4,7 +4,7 @@ bot:
 
 llm:
   confidence_threshold: 0.7   # Below this, ask for clarification
-  timeout_seconds: 20
+  timeout_seconds: 60
 
 discord:
   channel: "reminders"

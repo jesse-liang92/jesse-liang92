@@ -20,7 +20,7 @@ import logging.handlers
 import pathlib
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import yaml
@@ -90,7 +90,7 @@ def add_reminder(
     cur = conn.execute(
         """INSERT INTO reminders (task, remind_at, recurrence, channel_id, user_id, created_at)
            VALUES (?, ?, ?, ?, ?, ?)""",
-        (task, remind_at, recurrence, channel_id, user_id, datetime.utcnow().isoformat()),
+        (task, remind_at, recurrence, channel_id, user_id, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     return cur.lastrowid
@@ -114,7 +114,7 @@ def cancel_reminder(conn: sqlite3.Connection, reminder_id: int, user_id: str) ->
 
 
 def get_due_reminders(conn: sqlite3.Connection) -> list[dict[str, Any]]:
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     cur = conn.execute(
         "SELECT id, task, remind_at, recurrence, channel_id, user_id FROM reminders "
         "WHERE fired=0 AND remind_at <= ?",
@@ -298,11 +298,11 @@ def main() -> None:
 
     client = build_bot(config, db_conn, dry_run=args.dry_run)
 
-    async def runner():
+    async def setup_hook():
         client.loop.create_task(fire_due_reminders(client, db_conn, dry_run=args.dry_run))
-        await client.start(token)
 
-    asyncio.run(runner())
+    client.setup_hook = setup_hook
+    client.run(token)
 
 
 if __name__ == "__main__":

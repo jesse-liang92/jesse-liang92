@@ -3,7 +3,7 @@ schedule:
   timezone: "America/Los_Angeles"
 
 google:
-  calendar_id: "primary"
+  calendar_id: "96kvjho3n87fjtk7h8msisecjl6d0bjp@import.calendar.google.com"
   credentials_path: "~/.config/allyx/google_creds.json"
   token_path: "~/.config/allyx/google_token.json"
   lookahead_hours: 18     # Events to include (midnight + 18h covers full workday)

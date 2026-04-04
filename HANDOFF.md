@@ -28,12 +28,12 @@ and posting outputs to a personal Discord server.
 | Agent | LLM? | Schedule | Discord channel | Status |
 |---|---|---|---|---|
 | `agents/calendar_sync` | No | Every 15 min (systemd timer) | `#agent-status` on errors only | Complete + tested |
-| `agents/morning_digest` | Yes | Daily 06:00 PT | `#calendar` + Obsidian daily note | Complete + tested |
-| `agents/commute_ping` | Optional | Daily 05:30 PT | `#commute` | Complete + tested |
-| `agents/discord_reminders` | Yes | Always-on bot | `#reminders` | Complete + tested |
+| `agents/morning_digest` | Yes | Daily 06:00 PT | `#calendar` + Obsidian daily note | **Live** — Google Calendar + weather + LLM working |
+| `agents/commute_ping` | Optional | Daily 08:50 PT (Task Scheduler) | `#commute` | **Live** — Routes API migrated, scheduled |
+| `agents/discord_reminders` | Yes | Always-on bot | `#reminders` | **Live** — bot token set, tested on Discord |
 | `agents/grocery_optimizer` | Yes | Saturday 08:00 PT | `#groceries` | Complete + tested |
 | `agents/package_tracker` | Optional | Every 2 hours (systemd timer) | `#packages` | Complete + tested |
-| `agents/finance_digest` | Yes | Weekdays 1:00 PM PT | `#finance` | Complete + tested |
+| `agents/finance_digest` | Yes | Weekdays 1:05 PM PT (Task Scheduler) | `#finance` | **Live** — scheduled via Windows Task Scheduler |
 | `agents/bill_monitor` | — | — | `#bills` | **Not yet built** |
 
 ### Deploy
@@ -74,7 +74,31 @@ Built and tested (26/26 local tests pass). Uses `yfinance` for data, LLM for sum
 
 ---
 
-### 2. `bill_monitor` agent (deprioritized)
+### 2. Session 2026-04-02 — What Got Done
+
+- **discord_reminders**: Bot token created, bot invited to server, tested live. Fixed discord.py v2 async compatibility (`setup_hook` instead of `client.loop`). Fixed `utcnow()` deprecation warnings. Added Qwen `<think>` tag stripping to `lib/llm.py`. Bumped LLM timeout from 20s to 60s. Bot name: `claudebot#8197`.
+- **lib/llm.py**: Now strips `<think>...</think>` blocks from Qwen responses before JSON parsing.
+- Still needs: set up discord_reminders as always-on process (Task Scheduler at startup).
+
+### 3. Session 2026-04-01 — What Got Done
+
+- **commute_ping**: Migrated from legacy Google Directions API to **Routes API** (`routes.googleapis.com`). Scheduled via Windows Task Scheduler at 8:50 AM PT weekdays.
+- **morning_digest**: Google Calendar OAuth working, weather API working, Microsoft To Do removed (not needed). LLM timeout bumped to 120s. Prompt updated to distinguish internal vs external meetings (internal team: Anna-Marie, George, Devon, Megan, Joe, Zuly, Sean, John). Times display in PT. Posts to `#calendar` via webhook. Obsidian daily notes enabled.
+- **finance_digest**: Scheduled via Windows Task Scheduler at 1:05 PM PT weekdays.
+- **drop_monitor**: Running manually via `--watch`.
+- **Google OAuth**: `credentials.json` in repo root, copied to `~/.config/allyx/google_creds.json`. Token cached at `~/.config/allyx/google_token.json`. Calendar ID set to work calendar (`96kvjho3n87fjtk7h8msisecjl6d0bjp@import.calendar.google.com`).
+- **calendar_sync**: Tabled — Jesse has Google Calendar auto-syncing from Outlook already.
+
+**TODO for Jesse:**
+- [ ] Provide context on which meetings are recurring (e.g., weekly 1:1s, standups) so morning_digest can deprioritize them vs one-off meetings
+- [ ] Schedule morning_digest when ready (not yet scheduled)
+- [x] ~~Set up Discord bot token for `discord_reminders`~~ — done 2026-04-02
+- [ ] Package tracker API keys (UPS, FedEx, USPS) if still wanted
+- [ ] Set up discord_reminders as always-on (Task Scheduler at startup)
+
+---
+
+### 3. `bill_monitor` agent (deprioritized)
 **Purpose:** Track recurring bills, alert when due within 7 days, flag overdue.
 
 **Suggested approach:**
